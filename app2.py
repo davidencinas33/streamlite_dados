@@ -3,13 +3,7 @@ import random
 import streamlit as st
 import time
 
-if 'experiment_no' not in st.session_state:
-    st.session_state['experiment_no'] = 0
-if 'df_experiment_results' not in st.session_state:
-    st.session_state['df_experiment_results'] = pd.DataFrame(columns=['no', 'iteraciones', 'suma_deseada', 'probabilidad'])
-
-st.header('Lanzar dos dados 🎲🎲')
-st.markdown('¡Vamos a explorar la probabilidad de obtener una suma específica al lanzar dos dados!')
+# ... (código anterior) ...
 
 def roll_dice(n, target_sum):
     roll_outcomes = []
@@ -18,48 +12,26 @@ def roll_dice(n, target_sum):
         roll2 = random.randint(1, 6)
         roll_outcomes.append(roll1 + roll2)
 
-    mean = None
-    outcome_no = 0
     target_sum_count = 0
     
-    # Preparamos el gráfico con los valores posibles (del 2 al 12)
-    chart = st.line_chart([0.0] * 11)
+    # Crea un DataFrame inicial para el gráfico
+    initial_data = pd.DataFrame({'probabilidad': [0.0] * 11})
+    chart = st.line_chart(initial_data)
 
     for r in roll_outcomes:
-        outcome_no += 1
-        if r == target_sum:
-            target_sum_count += 1
+        target_sum_count += 1 if r == target_sum else 0
         
-        prob = target_sum_count / outcome_no
+        prob = target_sum_count / (roll_outcomes.index(r) + 1)
         
-        # Actualizamos solo el punto correspondiente a la suma deseada
-        data = [0.0] * 11
-        data[target_sum - 2] = prob
-        chart.add_rows([data])
+        # Crea un nuevo DataFrame para la fila a agregar
+        new_row = pd.DataFrame({'probabilidad': [0.0] * 11})
+        new_row.loc[target_sum - 2, 'probabilidad'] = prob
+        
+        # Usa add_rows con el DataFrame
+        chart.add_rows(new_row)
         
         time.sleep(0.01)
 
     return prob
 
-number_of_trials = st.slider('¿Número de lanzamientos?', 1, 1000, 10)
-target_sum = st.selectbox('¿Qué suma quieres buscar?', options=range(2, 13))
-start_button = st.button('Ejecutar simulación')
-
-if start_button:
-    st.write(f'Simulando {number_of_trials} lanzamientos, buscando la suma {target_sum}.')
-    st.session_state['experiment_no'] += 1
-    
-    final_prob = roll_dice(number_of_trials, target_sum)
-
-    st.session_state['df_experiment_results'] = pd.concat([
-        st.session_state['df_experiment_results'],
-        pd.DataFrame(data=[[st.session_state['experiment_no'],
-                            number_of_trials,
-                            target_sum,
-                            final_prob]],
-                     columns=['no', 'iteraciones', 'suma_deseada', 'probabilidad'])
-    ], axis=0)
-    st.session_state['df_experiment_results'] = st.session_state['df_experiment_results'].reset_index(drop=True)
-
-st.write("### Resultados del experimento")
-st.dataframe(st.session_state['df_experiment_results'])
+# ... (resto del código) ...
